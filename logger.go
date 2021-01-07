@@ -36,10 +36,16 @@ func init() {
 
 func InitLogger(conf Config) {
 	var encoder zapcore.Encoder
+	var encoderConfig zapcore.EncoderConfig
 	if conf.Release {
-		encoder = zapcore.NewJSONEncoder(getProductEncoder())
+		encoderConfig = getProductEncoder()
 	} else {
-		encoder = zapcore.NewConsoleEncoder(getDevelopEncoder())
+		encoderConfig = getDevelopEncoder()
+	}
+	if conf.Style == "json" {
+		encoder = zapcore.NewJSONEncoder(encoderConfig)
+	} else {
+		encoder = zapcore.NewConsoleEncoder(encoderConfig)
 	}
 	core := zapcore.NewCore(
 		encoder,
@@ -75,7 +81,7 @@ func getDevelopEncoder() zapcore.EncoderConfig {
 		StacktraceKey:  "stacktrace",
 		EncodeLevel:    zapcore.CapitalColorLevelEncoder,
 		EncodeTime:     zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05"),
-		EncodeDuration: zapcore.SecondsDurationEncoder,
+		EncodeDuration: zapcore.StringDurationEncoder,
 		EncodeCaller:   zapcore.ShortCallerEncoder,
 	}
 }

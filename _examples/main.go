@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	logger.InitLogger(logger.Config{Level: "debug"})
+	logger.InitLogger(logger.Config{Level: "debug", Release: false, Path: "", Style: "json"})
 	logger.DebugKV("not find", "consul", "192.168.1.2")
 	logger.Debug("this is log out")
 	logger.Info("this is info")
