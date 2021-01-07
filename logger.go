@@ -29,7 +29,7 @@ func init() {
 		zapcore.NewConsoleEncoder(getDevelopEncoder()),
 		getWriteSync(""),
 		getLogLevel("debug"))
-	zp := zap.New(core, zap.AddCallerSkip(1))
+	zp := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
 	wrapper = &loggerWrapper{Logger: zp.Sugar(), zp: zp}
 	logger = wrapper
 }
