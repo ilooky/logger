@@ -24,12 +24,28 @@ type loggerWrapper struct {
 	zp *zap.Logger
 }
 
-func InitLogger(path, level string) {
+func init() {
 	core := zapcore.NewCore(
-		zapcore.NewConsoleEncoder(getEncoder()),
-		getWriteSync(path),
-		getLogLevel(level))
+		zapcore.NewConsoleEncoder(getDevelopEncoder()),
+		getWriteSync(""),
+		getLogLevel("debug"))
 	zp := zap.New(core, zap.AddCallerSkip(1))
+	wrapper = &loggerWrapper{Logger: zp.Sugar(), zp: zp}
+	logger = wrapper
+}
+
+func InitLogger(conf Config) {
+	var encoder zapcore.Encoder
+	if conf.Release {
+		encoder = zapcore.NewJSONEncoder(getProductEncoder())
+	} else {
+		encoder = zapcore.NewConsoleEncoder(getDevelopEncoder())
+	}
+	core := zapcore.NewCore(
+		encoder,
+		getWriteSync(conf.Path),
+		getLogLevel(conf.Level))
+	zp := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
 	wrapper = &loggerWrapper{Logger: zp.Sugar(), zp: zp}
 	logger = wrapper
 }
@@ -49,8 +65,7 @@ func getLogLevel(level string) zapcore.Level {
 	return zapcore.InfoLevel
 }
 
-func getEncoder() zapcore.EncoderConfig {
-	zap.NewProductionEncoderConfig()
+func getDevelopEncoder() zapcore.EncoderConfig {
 	return zapcore.EncoderConfig{
 		TimeKey:        "time",
 		LevelKey:       "level",
@@ -63,6 +78,11 @@ func getEncoder() zapcore.EncoderConfig {
 		EncodeDuration: zapcore.SecondsDurationEncoder,
 		EncodeCaller:   zapcore.ShortCallerEncoder,
 	}
+}
+func getProductEncoder() zapcore.EncoderConfig {
+	encoder := zap.NewProductionEncoderConfig()
+	encoder.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05")
+	return encoder
 }
 
 //logOutPath + string(os.PathSeparator) + "us_diagram.log",
@@ -139,21 +159,38 @@ func Warnf(fmt string, args ...interface{}) {
 func Errorf(fmt string, args ...interface{}) {
 	logger.Errorf(fmt, args...)
 }
+
 func Panicf(fmt string, args ...interface{}) {
 	logger.Panicf(fmt, args...)
 }
+
 func DebugKV(msg, key string, val interface{}) {
 	wrapper.zp.Debug(msg, zap.Any(key, val))
+}
+func DebugKv(msg string, fields ...zap.Field) {
+	wrapper.zp.Debug(msg, fields...)
 }
 
 func ErrorKV(msg, key string, val interface{}) {
 	wrapper.zp.Error(msg, zap.Any(key, val))
 }
 
+func ErrorKv(msg string, fields ...zap.Field) {
+	wrapper.zp.Error(msg, fields...)
+}
+
 func InfoKV(msg, key string, val interface{}) {
 	wrapper.zp.Info(msg, zap.Any(key, val))
 }
 
+func InfoKv(msg string, fields ...zap.Field) {
+	wrapper.zp.Info(msg, fields...)
+}
+
 func PanicKV(msg, key string, val interface{}) {
 	wrapper.zp.Panic(msg, zap.Any(key, val))
+}
+
+func PanicKv(msg string, fields ...zap.Field) {
+	wrapper.zp.Panic(msg, fields...)
 }
