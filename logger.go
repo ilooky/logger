@@ -21,16 +21,18 @@ type Config struct {
 
 type loggerWrapper struct {
 	Logger
-	zp *zap.Logger
+	zp    *zap.Logger
+	level string
 }
 
 func init() {
+	level := "info"
 	core := zapcore.NewCore(
 		zapcore.NewConsoleEncoder(getDevelopEncoder()),
 		getWriteSync(""),
-		getLogLevel("debug"))
+		getLogLevel(level))
 	zp := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
-	wrapper = &loggerWrapper{Logger: zp.Sugar(), zp: zp}
+	wrapper = &loggerWrapper{Logger: zp.Sugar(), zp: zp, level: level}
 	logger = wrapper
 }
 
@@ -52,7 +54,7 @@ func InitLogger(conf Config) {
 		getWriteSync(conf.Path),
 		getLogLevel(conf.Level))
 	zp := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
-	wrapper = &loggerWrapper{Logger: zp.Sugar(), zp: zp}
+	wrapper = &loggerWrapper{Logger: zp.Sugar(), zp: zp, level: conf.Level}
 	logger = wrapper
 }
 
@@ -129,6 +131,13 @@ func SetLogger(log Logger) {
 
 func GetLogger() Logger {
 	return logger
+}
+
+func GetLevel() string {
+	if wrapper == nil {
+		return "info"
+	}
+	return wrapper.level
 }
 
 func Debug(args ...interface{}) {
